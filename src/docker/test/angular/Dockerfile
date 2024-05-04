@@ -1,7 +1,8 @@
 FROM seedsync/build/angular/env as seedsync_test_angular
 #! this is unsafe but I am aware 
-RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
-    sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+RUN RUN echo "deb http://deb.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list.d/my.list \ 
+    sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list.d/my.list && \
+    sed -i 's/security.debian.org/archive.debian.org/g'  /etc/apt/sources.list.d/my.list && \
     apt-get -o Acquire::Check-Valid-Until=false update
 
 RUN apt-get update
