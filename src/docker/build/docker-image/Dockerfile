@@ -44,7 +44,8 @@ RUN cd /app/python && poetry install --no-dev
 
 # Creates environment for Python dev
 FROM seedsync_run_python_env as seedsync_run_python_devenv
-RUN cd /app/python && poetry install
+# RUN cd /app/python && poetry install
+RUN cd /app/python && poetry lock --no-update && poetry install --no-dev
 
 
 # Installs Seedsync python code
