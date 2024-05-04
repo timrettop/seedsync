@@ -1,4 +1,4 @@
-import { Checkbox, Input } from "@nextui-org/react";
+import { Button, Checkbox, Input } from "@nextui-org/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -30,6 +30,13 @@ function Config() {
     useState(0);
   const [maxConnectionsPerFileDirectory, setMaxConnectionsPerFileDirectory] =
     useState(0);
+  const [maxConnectionsParallelFiles, setMaxConnectionsParallelFiles] =
+    useState(0);
+  const [useTempFile, setUseTempFile] = useState(false);
+  const [remoteScanInterval, setRemoteScanInterval] = useState(0);
+  const [localScanInterval, setLocalScanInterval] = useState(0);
+  const [downloadScanInterval, setDownloadScanInterval] = useState(0);
+  const [webPort, setWebPort] = useState(0);
 
   const queryClient = useQueryClient();
 
@@ -68,11 +75,19 @@ function Config() {
       setMaxParallelDownloads(data.lftp.num_max_parallel_downloads);
       setMaxTotalConnections(data.lftp.num_max_total_connections);
       setMaxConnectionsPerFileSingle(
-        data.lftp.num_max_connections_per_dir_file
-      );
-      setMaxConnectionsPerFileDirectory(
         data.lftp.num_max_connections_per_root_file
       );
+      setMaxConnectionsPerFileDirectory(
+        data.lftp.num_max_connections_per_dir_file
+      );
+      setMaxConnectionsParallelFiles(
+        data.lftp.num_max_parallel_files_per_download
+      );
+      setUseTempFile(data.lftp.use_temp_file);
+      setRemoteScanInterval(data.controller.interval_ms_remote_scan);
+      setLocalScanInterval(data.controller.interval_ms_local_scan);
+      setDownloadScanInterval(data.controller.interval_ms_downloading_scan);
+      setWebPort(data.web.port);
     }
   }, [data]);
 
@@ -102,6 +117,100 @@ function Config() {
       return false;
     }
     return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!data) {
+      return;
+    }
+
+    // take values from state and see if there are different from the data object
+    // if they are different then update the server with the new values
+    // if they are the same then do nothing
+    // if they are empty then do nothing
+    // if they are invalid then do nothing
+
+    if (hostname !== data.lftp.remote_address) {
+      console.log("hostname is different");
+    }
+    if (port !== data.lftp.remote_port.toString()) {
+      console.log("port is different");
+    }
+    if (username !== data.lftp.remote_username) {
+      console.log("username is different");
+    }
+    if (password !== data.lftp.remote_password) {
+      console.log("password is different");
+    }
+    if (usingKeyFile !== data.lftp.use_ssh_key) {
+      console.log("usingKeyFile is different");
+    }
+    if (remoteDirectory !== data.lftp.remote_path) {
+      console.log("remoteDirectory is different");
+    }
+    if (localDirectory !== data.lftp.local_path) {
+      console.log("localDirectory is different");
+    }
+    if (remotePathToScanScript !== data.lftp.remote_path_to_scan_script) {
+      console.log("remotePathToScanScript is different");
+    }
+    if (autoQueue !== data.autoqueue.enabled) {
+      console.log("autoQueue is different");
+    }
+    if (restrictToPatterns !== data.autoqueue.patterns_only) {
+      console.log("restrictToPatterns is different");
+    }
+    if (autoExtract !== data.autoqueue.auto_extract) {
+      console.log("autoExtract is different");
+    }
+    if (
+      useLocalPathAsExtractPath !==
+      data.controller.use_local_path_as_extract_path
+    ) {
+      console.log("useLocalPathAsExtractPath is different");
+    }
+    if (extractPath !== data.controller.extract_path) {
+      console.log("extractPath is different");
+    }
+    if (maxParallelDownloads !== data.lftp.num_max_parallel_downloads) {
+      console.log("maxParallelDownloads is different");
+    }
+    if (maxTotalConnections !== data.lftp.num_max_total_connections) {
+      console.log("maxTotalConnections is different");
+    }
+    if (
+      maxConnectionsPerFileSingle !==
+      data.lftp.num_max_connections_per_root_file
+    ) {
+      console.log("maxConnectionsPerFileSingle is different");
+    }
+    if (
+      maxConnectionsPerFileDirectory !==
+      data.lftp.num_max_connections_per_dir_file
+    ) {
+      console.log("maxConnectionsPerFileDirectory is different");
+    }
+    if (
+      maxConnectionsParallelFiles !==
+      data.lftp.num_max_parallel_files_per_download
+    ) {
+      console.log("maxConnectionsParallelFiles is different");
+    }
+    if (useTempFile !== data.lftp.use_temp_file) {
+      console.log("useTempFile is different");
+    }
+    if (remoteScanInterval !== data.controller.interval_ms_remote_scan) {
+      console.log("remoteScanInterval is different");
+    }
+    if (localScanInterval !== data.controller.interval_ms_local_scan) {
+      console.log("localScanInterval is different");
+    }
+    if (downloadScanInterval !== data.controller.interval_ms_downloading_scan) {
+      console.log("downloadScanInterval is different");
+    }
+    if (webPort !== data.web.port) {
+      console.log("webPort is different");
+    }
   };
 
   return (
@@ -299,7 +408,7 @@ function Config() {
               }
               size="md"
               type="text"
-              label="Max Connections Per File (Dirextory)"
+              label="Max Connections Per File (Directory)"
               placeholder="5"
               isRequired={true}
               errorMessage="Please enter a valid number"
@@ -313,12 +422,77 @@ function Config() {
               isRequired={true}
               errorMessage="Please enter a valid number"
               isInvalid={false}
+              value={maxConnectionsParallelFiles.toString()}
+              onChange={(e) =>
+                setMaxConnectionsParallelFiles(Number(e.target.value))
+              }
             />
-            <Checkbox checked={false}>
+            <Checkbox
+              checked={false}
+              onChange={(e) => {
+                setUseTempFile(e.target.checked);
+              }}
+            >
               Rename unfinished/downloading files{" "}
             </Checkbox>
           </div>
+          <div className="bg-[#18181b] p-2 m-3">
+            <h3>File Discovery</h3>
+            <Input
+              size="md"
+              type="text"
+              label="Remote Scan interval (ms)"
+              placeholder="5"
+              isRequired={true}
+              errorMessage="Please enter a valid number"
+              isInvalid={false}
+              value={remoteScanInterval.toString()}
+              onChange={(e) => setRemoteScanInterval(Number(e.target.value))}
+            />
+
+            <Input
+              size="md"
+              type="text"
+              label="Local Scan interval (ms)"
+              placeholder="5"
+              isRequired={true}
+              errorMessage="Please enter a valid number"
+              isInvalid={false}
+              value={localScanInterval.toString()}
+              onChange={(e) => setLocalScanInterval(Number(e.target.value))}
+            />
+
+            <Input
+              size="md"
+              type="text"
+              label="Remote Scan interval (ms)"
+              placeholder="5"
+              isRequired={true}
+              errorMessage="Please enter a valid number"
+              isInvalid={false}
+              value={remoteScanInterval.toString()}
+              onChange={(e) => setRemoteScanInterval(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <h3> Other settings </h3>
+            <Input
+              label="Web GUI Port"
+              placeholder="8080"
+              size="md"
+              type="text"
+              isRequired={true}
+              errorMessage="Please enter a valid port"
+              isInvalid={false}
+              value={webPort.toString()}
+              onChange={(e) => setWebPort(Number(e.target.value))}
+            />
+            <Checkbox checked={false} onChange={(e) => {}}>
+              Enable Debug Mode
+            </Checkbox>
+          </div>
         </div>
+        <Button> Submit Here</Button>
       </div>
     </>
   );
