@@ -39,13 +39,11 @@ ENV LANG=C.UTF-8
 RUN mkdir -p /app
 COPY src/python/pyproject.toml /app/python/
 COPY src/python/poetry.lock /app/python/
-RUN cd /app/python && poetry install --no-dev
-
+RUN cd /app/python && poetry lock --no-update && poetry install --no-dev
 
 # Creates environment for Python dev
 FROM seedsync_run_python_env as seedsync_run_python_devenv
-# RUN cd /app/python && poetry install
-RUN cd /app/python && poetry lock --no-update && poetry install --no-dev
+RUN cd /app/python && poetry install
 
 
 # Installs Seedsync python code
