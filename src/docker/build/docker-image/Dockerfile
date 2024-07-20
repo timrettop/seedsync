@@ -6,20 +6,20 @@ ARG STAGING_VERSION=latest
 FROM python:3.8-slim as seedsync_run_python_env
 
 # Install dependencies
-RUN sed -i -e's/ main/ main contrib non-free/g' /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y \
-        gcc \
-        libssl-dev \
-        lftp \
-        openssh-client \
-        p7zip \
-        p7zip-full \
-        p7zip-rar \
-        bzip2 \
-        curl \
-        libnss-wrapper \
-        libxml2-dev libxslt-dev libffi-dev \
+RUN echo "deb http://deb.debian.org/debian buster main contrib non-free" > /etc/apt/sources.list.d/my.list \
+    && apt-get update \
+    && apt-get install -y \
+    gcc \
+    libssl-dev \
+    lftp \
+    openssh-client \
+    p7zip \
+    p7zip-full \
+    p7zip-rar \
+    bzip2 \
+    curl \
+    libnss-wrapper \
+    libxml2-dev libxslt-dev libffi-dev \
     && apt-get clean
 # Fix for patoolib
 # See: https://github.com/wummel/patool/issues/90
@@ -39,8 +39,7 @@ ENV LANG=C.UTF-8
 RUN mkdir -p /app
 COPY src/python/pyproject.toml /app/python/
 COPY src/python/poetry.lock /app/python/
-RUN cd /app/python && poetry install --no-dev
-
+RUN cd /app/python && poetry lock --no-update && poetry install --no-dev
 
 # Creates environment for Python dev
 FROM seedsync_run_python_env as seedsync_run_python_devenv
@@ -96,6 +95,6 @@ CMD [ \
     "-c", "/config", \
     "--html", "/app/html", \
     "--scanfs", "/app/scanfs" \
-]
+    ]
 
 EXPOSE 8800

@@ -15,7 +15,7 @@ paste = "*"
 patool = "*"
 pexpect = "*"
 pytz = "*"
-requests = "*"
+requests = "^2.25.1"
 tblib = "*"
 timeout-decorator = "*"
 
